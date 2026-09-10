@@ -397,14 +397,54 @@ document.getElementById('createBtn').onclick=()=>{
  peer.on('error',e=>document.getElementById('msg').textContent='خطای روم: '+e.type);
 };
 document.getElementById('joinBtn').onclick=()=>{
- const code=document.getElementById('roomInput').value.trim();
- if(!/^\d{6}$/.test(code)){document.getElementById('msg').textContent='کد باید ۶ رقمی باشد';return}
- host=false;mode='online';peer=new Peer();
- peer.on('open',()=>{conn=peer.connect(code,{reliable:true});setupConn()});
- peer.on('error',e=>document.getElementById('msg').textContent='روم پیدا نشد یا اتصال ناموفق بود');
+  const code=document.getElementById('roomInput').value.trim();
+  const msg=document.getElementById('msg');
+  const btn=document.getElementById('joinBtn');
+
+  if(!/^\d{6}$/.test(code)){
+    msg.textContent='کد باید ۶ رقمی باشد';
+    return;
+  }
+
+  host=false;mode='online';
+  btn.disabled=true;
+  btn.textContent='در حال اتصال...';
+  msg.textContent='در حال پیدا کردن روم...';
+
+  peer=new Peer();
+
+  peer.on('open',()=>{
+    msg.textContent='روم پیدا شد؛ در حال اتصال به میزبان...';
+    conn=peer.connect(code,{reliable:true});
+    setupConn();
+  });
+
+  peer.on('error',e=>{
+    btn.disabled=false;
+    btn.textContent='ورود به روم';
+    if(e.type==='peer-unavailable'){
+      msg.textContent='این روم پیدا نشد یا میزبان آنلاین نیست ❌';
+    }else if(e.type==='network'){
+      msg.textContent='خطای اینترنت؛ دوباره تلاش کنید ❌';
+    }else{
+      msg.textContent='اتصال ناموفق بود ❌';
+    }
+  });
 };
 function setupConn(){
- conn.on('open',()=>{begin('online')});
+ const msg=document.getElementById('msg');
+  const btn=document.getElementById('joinBtn');
+  conn.on('open',()=>{
+    msg.textContent='اتصال برقرار شد ✓';
+    if(!host){btn.disabled=true;btn.textContent='متصل شد ✓';}
+    begin('online');
+  });
+  conn.on('error',()=>{
+    if(!started){
+      msg.textContent='خطا در اتصال به میزبان ❌';
+      if(!host){btn.disabled=false;btn.textContent='ورود به روم';}
+    }
+  });
  conn.on('data',data=>{
   if(host){
    if(data.type==='input')remoteInput=data;
@@ -416,7 +456,13 @@ function setupConn(){
    document.getElementById('s1').textContent=score[0];document.getElementById('s2').textContent=score[1];
   }
  });
- conn.on('close',()=>{document.getElementById('net').textContent='پلیر دوم قطع شد';});
+ conn.on('close',()=>{
+    document.getElementById('net').textContent='پلیر دوم قطع شد';
+    if(!started){
+      msg.textContent='اتصال بسته شد ❌';
+      if(!host){btn.disabled=false;btn.textContent='ورود به روم';}
+    }
+  });
 }
 setInterval(sendInput,80);
 document.getElementById('fs').onclick=async()=>{
