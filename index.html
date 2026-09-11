@@ -726,21 +726,137 @@ document.getElementById('offlineBtn').onclick=()=>begin('offline');
 
 function randCode(){return String(Math.floor(100000+Math.random()*900000))}
 document.getElementById('createBtn').onclick=()=>{
- const code=randCode();host=true;mode='online';guestConns=[];conn=null;document.getElementById('roomInfo').classList.remove('hidden');document.getElementById('joinBox').classList.add('hidden');document.getElementById('roomCode').textContent=code;document.getElementById('waitText').textContent=matchMode==='2v1'?'منتظر ورود یک هم‌تیمی...':'منتظر ورود پلیر دوم...';peer=new Peer(code);
- peer.on('open',()=>{});peer.on('connection',c=>{if(guestConns.length>=1){c.close();return}teamOf=matchMode==='2v1'?[1,1,2]:[1,2];guestConns.push(c);if(!conn)conn=c;const guestSlot=guestConns.length;setupConn(c,guestSlot);try{c.send({type:'assign',slot:guestSlot+1,mode:matchMode,teamOf})}catch(e){}document.getElementById('waitText').textContent=matchMode==='2v1'?'هم‌تیمی وصل شد • رقیب = بات حرفه‌ای':'پلیر دوم وصل شد ✓';if(guestConns.length===1){begin('online');broadcastState(true);}});
- peer.on('error',e=>document.getElementById('msg').textContent='خطای روم: '+e.type);
+ const code=randCode();
+ host=true;mode='online';guestConns=[];conn=null;window.__roomCode=code;window.__gameStarted=false;
+ document.getElementById('roomInfo').classList.remove('hidden');
+ document.getElementById('joinBox').classList.add('hidden');
+ document.getElementById('roomCode').textContent=code;
+ document.getElementById('waitText').textContent=matchMode==='2v1'?'منتظر ورود یک هم‌تیمی...':'منتظر ورود پلیر دوم...';
+ document.getElementById('msg').textContent='';
+ // Prefixed Peer ID is more reliable on PeerJS cloud than bare numeric IDs
+ const peerId='fd'+code;
+ peer=new Peer(peerId);
+ peer.on('open',id=>{document.getElementById('msg').textContent='روم آماده است';});
+ peer.on('connection',c=>{
+  if(guestConns.length>=1){try{c.close()}catch(e){}return;}
+  teamOf=matchMode==='2v1'?[1,1,2]:[1,2];
+  guestConns.push(c);
+  if(!conn)conn=c;
+  const guestSlot=guestConns.length; // 1
+  setupConn(c,guestSlot);
+  // Send assign only when the data channel is actually open; retry a few times
+  const sendAssign=()=>{
+   try{c.send({type:'assign',slot:guestSlot+1,mode:matchMode,teamOf})}catch(e){}
+  };
+  if(c.open)sendAssign();
+  else c.on('open',()=>{sendAssign(); setTimeout(sendAssign,200); setTimeout(sendAssign,600);});
+  setTimeout(sendAssign,150);
+  setTimeout(sendAssign,400);
+  document.getElementById('waitText').textContent=matchMode==='2v1'?'هم‌تیمی وصل شد • رقیب = بات حرفه‌ای':'پلیر دوم وصل شد ✓';
+  if(!window.__gameStarted){window.__gameStarted=true;begin('online');broadcastState(true);}
+ });
+ peer.on('error',e=>{document.getElementById('msg').textContent='خطای روم: '+(e&&e.type?e.type:e);});
 };
-document.getElementById('joinBtn').onclick=()=>{const code=document.getElementById('roomInput').value.trim();if(!/^\d{6}$/.test(code)){document.getElementById('msg').textContent='کد باید ۶ رقمی باشد';return}host=false;mode='online';window.__roomCode=code;window.__reconnecting=false;peer=new Peer();peer.on('open',()=>{conn=peer.connect(code,{reliable:true});setupConn(conn,0)});peer.on('error',e=>document.getElementById('msg').textContent='روم پیدا نشد یا اتصال ناموفق بود')};
+document.getElementById('joinBtn').onclick=()=>{
+ const code=document.getElementById('roomInput').value.trim();
+ if(!/^\d{6}$/.test(code)){document.getElementById('msg').textContent='کد باید ۶ رقمی باشد';return}
+ host=false;mode='online';window.__roomCode=code;window.__reconnecting=false;window.__gameStarted=false;
+ document.getElementById('msg').textContent='در حال اتصال...';
+ peer=new Peer();
+ peer.on('open',()=>{
+  const peerId='fd'+code;
+  conn=peer.connect(peerId,{reliable:true});
+  setupConn(conn,0);
+  document.getElementById('msg').textContent='اتصال به روم...';
+ });
+ peer.on('error',e=>{document.getElementById('msg').textContent='روم پیدا نشد یا اتصال ناموفق بود';});
+};
 function setupConn(c,slot){
- c.on('open',()=>{if(!host){document.getElementById('waitText').textContent='اتصال برقرار شد ✓';try{c.send({type:'input',x:0,y:0,shoot:false,charge:0,matchMode,skin:selectedSkin})}catch(e){}}startPing(c)});
- c.on('data',data=>{if(data.type==='ping'){try{c.send({type:'pong',id:data.id})}catch(e){}return}if(data.type==='pong'&&window.__pingSent&&data.id===window.__pingSent.id){showPing(performance.now()-window.__pingSent.sent);return}
-   if(host){if(data.type==='input'){playerInputs[slot]=data;if(typeof data.skin==='number'){const pi=Math.min(slot,players.length-1);if(players[pi])players[pi].skin=clamp(data.skin,0,skins.length-1)}}else if(data.type==='action'){playerInputs[slot]=playerInputs[slot]||{};playerInputs[slot]._action=data.action;playerInputs[slot]._power=data.power||0}}
-   else if(data.type==='assign'){matchMode=data.mode||'1v1';teamOf=data.teamOf||teamOf;playerIndex=Math.max(0,(data.slot||1)-1);players=matchMode==='2v1'?[p1,p2,p3]:[p1,p2];begin('online')}
-   else if(data.type==='state'){matchMode=data.mode||matchMode;teamOf=data.teamOf||teamOf;players=matchMode==='2v1'?[p1,p2,p3]:[p1,p2];const lp=playerIndex;data.players.forEach((q,i)=>{if(!players[i])return;if(i===lp){players[i].x+=(q.x-players[i].x)*.35;players[i].y+=(q.y-players[i].y)*.35;players[i].vx=q.vx;players[i].vy=q.vy;players[i].angle=q.angle;if(typeof q.skin==='number')players[i].skin=q.skin}else{players[i].x+=(q.x-players[i].x)*.55;players[i].y+=(q.y-players[i].y)*.55;players[i].vx=q.vx;players[i].vy=q.vy;players[i].angle=q.angle;if(typeof q.skin==='number')players[i].skin=q.skin}});ball.x+=(data.b.x-ball.x)*.6;ball.y+=(data.b.y-ball.y)*.6;ball.vx=data.b.vx;ball.vy=data.b.vy;score=data.s;kickoffCountdown=Number(data.cd)||0;if(typeof data.g==='number'&&data.g>goalSerial){goalSerial=data.g;goalSound();goalFlash=1.15;goalParticles=[];for(let i=0;i<42;i++){const a=Math.random()*Math.PI*2,sp=.08+Math.random()*.24;goalParticles.push({x:.5+(Math.random()-.5)*.2,y:.5+(Math.random()-.5)*.18,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.1,life:.7+Math.random()*.45,s:2+Math.random()*4,r:Math.random()*6.28,c:i%3?'#fff':'#ffd84a'})}}document.getElementById('s1').textContent=score[0];document.getElementById('s2').textContent=score[1]}});
- c.on('close',()=>{if(c===conn)stopPing();document.getElementById('net').textContent='پلیر قطع شد';if(document.getElementById('ping'))document.getElementById('ping').classList.add('hidden');
-  if(!host&&window.__roomCode&&!window.__reconnecting){window.__reconnecting=true;document.getElementById('net').textContent='در حال اتصال مجدد...';setTimeout(()=>{try{const nc=peer.connect(window.__roomCode,{reliable:true});conn=nc;setupConn(nc,0);window.__reconnecting=false;document.getElementById('net').textContent='آنلاین • مهمان'}catch(e){window.__reconnecting=false;document.getElementById('net').textContent='اتصال مجدد ناموفق'}} ,1200)}
-  if(host){guestConns=guestConns.filter(g=>g!==c&&g&&g.open);document.getElementById('net').textContent=guestConns.length?'آنلاین • میزبان':'پلیر قطع شد'}
-});
+ c.on('open',()=>{
+  if(!host){
+   document.getElementById('msg').textContent='وصل شد — منتظر شروع بازی...';
+   try{c.send({type:'ready',skin:selectedSkin,matchMode})}catch(e){}
+   try{c.send({type:'input',x:0,y:0,shoot:false,charge:0,matchMode,skin:selectedSkin})}catch(e){}
+  }
+  startPing(c);
+ });
+ c.on('data',data=>{
+  if(!data||!data.type)return;
+  if(data.type==='ping'){try{c.send({type:'pong',id:data.id})}catch(e){}return}
+  if(data.type==='pong'&&window.__pingSent&&data.id===window.__pingSent.id){showPing(performance.now()-window.__pingSent.sent);return}
+  if(host){
+   if(data.type==='ready'){
+    // Guest is fully ready — (re)send assign and ensure game started
+    try{c.send({type:'assign',slot:slot+1,mode:matchMode,teamOf:matchMode==='2v1'?[1,1,2]:[1,2]})}catch(e){}
+    if(!window.__gameStarted){window.__gameStarted=true;begin('online');broadcastState(true);}
+    else broadcastState(true);
+   } else if(data.type==='input'){
+    playerInputs[slot]=data;
+    if(typeof data.skin==='number'){const pi=Math.min(slot,players.length-1);if(players[pi])players[pi].skin=clamp(data.skin,0,skins.length-1)}
+   } else if(data.type==='action'){
+    playerInputs[slot]=playerInputs[slot]||{};
+    playerInputs[slot]._action=data.action;
+    playerInputs[slot]._power=data.power||0;
+   }
+  } else {
+   if(data.type==='assign'){
+    matchMode=data.mode||'1v1';
+    teamOf=data.teamOf||(matchMode==='2v1'?[1,1,2]:[1,2]);
+    playerIndex=Math.max(0,(data.slot||1)-1);
+    players=matchMode==='2v1'?[p1,p2,p3]:[p1,p2];
+    document.getElementById('msg').textContent='';
+    if(!window.__gameStarted){window.__gameStarted=true;begin('online');}
+   } else if(data.type==='state'){
+    matchMode=data.mode||matchMode;
+    teamOf=data.teamOf||teamOf;
+    players=matchMode==='2v1'?[p1,p2,p3]:[p1,p2];
+    const lp=playerIndex;
+    data.players.forEach((q,i)=>{
+     if(!players[i])return;
+     const blend=i===lp?0.35:0.55;
+     players[i].x+=(q.x-players[i].x)*blend;
+     players[i].y+=(q.y-players[i].y)*blend;
+     players[i].vx=q.vx;players[i].vy=q.vy;players[i].angle=q.angle;
+     if(typeof q.skin==='number')players[i].skin=q.skin;
+    });
+    ball.x+=(data.b.x-ball.x)*.6;ball.y+=(data.b.y-ball.y)*.6;
+    ball.vx=data.b.vx;ball.vy=data.b.vy;
+    score=data.s;kickoffCountdown=Number(data.cd)||0;
+    if(typeof data.g==='number'&&data.g>goalSerial){
+     goalSerial=data.g;goalSound();goalFlash=1.15;goalParticles=[];
+     for(let i=0;i<42;i++){const a=Math.random()*Math.PI*2,sp=.08+Math.random()*.24;goalParticles.push({x:.5+(Math.random()-.5)*.2,y:.5+(Math.random()-.5)*.18,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.1,life:.7+Math.random()*.45,s:2+Math.random()*4,r:Math.random()*6.28,c:i%3?'#fff':'#ffd84a'})}
+    }
+    document.getElementById('s1').textContent=score[0];document.getElementById('s2').textContent=score[1];
+    // If guest somehow missed assign but is receiving state, enter the match
+    if(!window.__gameStarted&&!document.getElementById('menu').classList.contains('hidden')){
+     window.__gameStarted=true;begin('online');
+    }
+   }
+  }
+ });
+ c.on('close',()=>{
+  if(c===conn)stopPing();
+  document.getElementById('net').textContent='پلیر قطع شد';
+  if(document.getElementById('ping'))document.getElementById('ping').classList.add('hidden');
+  if(!host&&window.__roomCode&&!window.__reconnecting){
+   window.__reconnecting=true;
+   document.getElementById('net').textContent='در حال اتصال مجدد...';
+   setTimeout(()=>{
+    try{
+     const nc=peer.connect('fd'+window.__roomCode,{reliable:true});
+     conn=nc;setupConn(nc,0);window.__reconnecting=false;
+     document.getElementById('net').textContent='آنلاین • مهمان';
+    }catch(e){window.__reconnecting=false;document.getElementById('net').textContent='اتصال مجدد ناموفق'}
+   },1200);
+  }
+  if(host){
+   guestConns=guestConns.filter(g=>g!==c&&g&&g.open);
+   document.getElementById('net').textContent=guestConns.length?'آنلاین • میزبان':'پلیر قطع شد';
+  }
+ });
+ c.on('error',err=>{
+  if(!host)document.getElementById('msg').textContent='خطای اتصال — دوباره تلاش کنید';
+ });
 }
 document.getElementById('fs').onclick=async()=>{
  try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}
