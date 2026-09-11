@@ -83,6 +83,44 @@ input{width:100%;padding:15px;border-radius:14px;border:1px solid #ffffff25;back
 .skinPanel{margin-top:10px;padding:10px;border-radius:15px;background:#ffffff08;border:1px solid #ffffff14;text-align:right}
 .skinTitle{font-size:11px;color:#bfe8d0;font-weight:900;margin-bottom:8px}.skins{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
 .skinBtn{width:46px;height:46px;border-radius:14px;border:2px solid #ffffff22;background:radial-gradient(circle at 32% 22%,var(--a),var(--c) 48%,var(--t) 100%);position:relative;overflow:hidden;box-shadow:inset 0 2px 0 #ffffff55,inset 0 -7px 12px #0007,0 6px 15px #0006;transition:.15s transform,.15s filter,.15s box-shadow}.skinBtn:before{content:'';position:absolute;inset:5px;border-radius:11px;border:1px solid #ffffff55;background:linear-gradient(135deg,#ffffff25,transparent 42%,#0004)}.skinBtn:after{content:'';position:absolute;left:7px;right:7px;top:50%;height:3px;transform:rotate(-18deg);border-radius:5px;background:var(--a);box-shadow:0 0 7px var(--g)}.skinBtn i{position:absolute;left:50%;top:50%;width:19px;height:19px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px var(--g),inset 0 0 5px #fff8;background:var(--c);z-index:2}.skinBtn.active{border-color:#fff;transform:translateY(-2px) scale(1.07);box-shadow:0 0 20px var(--g),inset 0 2px 0 #fff8,0 7px 18px #0008}.skinBtn:active{transform:scale(.94)}.skinName{font-size:9px;margin-top:4px;color:#e0eee7;text-align:center;font-weight:900}.goalBanner{position:fixed;left:50%;top:43%;transform:translate(-50%,-50%) scale(.78);z-index:18;text-align:center;pointer-events:none;opacity:0;padding:20px 42px 17px;border-radius:28px;background:linear-gradient(145deg,#081b12eF,#020806eF);border:1px solid #8dffc566;box-shadow:0 0 0 1px #ffffff10 inset,0 20px 70px #000b,0 0 70px #36ff9a28;transition:opacity .18s,transform .35s cubic-bezier(.2,1.4,.3,1);overflow:hidden}.goalBanner:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#4dff9a22,transparent 58%);pointer-events:none}.goalBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.goalBurst{font-size:18px;color:#ffd84a;text-shadow:0 0 18px #ffd84a;margin-bottom:-4px}.goalBig{font-size:clamp(48px,10vw,92px);font-weight:1000;letter-spacing:5px;color:#fff;line-height:.95;text-shadow:0 0 30px #6dffb0,0 8px 28px #000}.goalSub{margin-top:8px;font-size:13px;letter-spacing:3px;color:#caffdf;font-weight:1000}.goalMini{margin-top:7px;font-size:8px;letter-spacing:2px;color:#ffd85a;font-weight:900}.botBadge{font-size:9px;color:#ffe27a;border:1px solid #ffe27a44;padding:2px 5px;border-radius:6px}
+
+/* FINAL MOBILE UI FIX */
+.joinLabel{display:none}
+@media (orientation:landscape){
+  #menu{align-items:center;padding:10px}
+  .card{width:min(94vw,1080px)!important;height:min(88dvh,470px)!important;min-height:0!important;padding:16px!important;border-radius:24px!important;display:grid!important;grid-template-columns:minmax(180px,.85fr) minmax(250px,1.2fr) minmax(230px,1fr)!important;grid-template-rows:auto 1fr auto!important;gap:10px 14px!important;overflow:hidden!important}
+  .card h1{grid-column:1!important;grid-row:1!important;font-size:clamp(22px,4vw,36px)!important;margin:10px 0 4px!important}
+  .card p{grid-column:1!important;grid-row:2!important;font-size:clamp(10px,1.5vw,13px)!important;margin:0!important;align-self:start!important}
+  #modePick{grid-column:1!important;grid-row:3!important;margin:0!important;gap:7px!important}
+  .modeBtn{padding:10px 7px!important;font-size:12px!important}
+  .skinPanel{grid-column:2!important;grid-row:1 / span 3!important;margin:0!important;padding:12px!important;align-self:stretch!important;display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important}
+  .skins{gap:9px!important;max-height:180px;overflow:auto;padding:3px}
+  .skinBtn{width:50px!important;height:50px!important;flex:0 0 50px!important;border-radius:14px!important}
+  .skinBtn i{width:20px!important;height:20px!important}
+  .skinName{font-size:10px!important;margin-top:7px!important}
+  #offlineBtn,#createBtn{grid-column:3!important;padding:12px 9px!important;margin:0!important;font-size:13px!important;min-height:48px!important;border-radius:14px!important}
+  #offlineBtn{grid-row:1!important}
+  #createBtn{grid-row:2!important}
+  .joinCompact{grid-column:3!important;grid-row:3!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;align-items:center!important;margin:0!important;padding:8px!important;border-radius:14px!important;background:#ffffff08!important;border:1px solid #ffffff12!important}
+  .joinLabel{display:block!important;grid-column:1 / span 2!important;font-size:10px!important;color:#9fe0bd!important;text-align:right!important}
+  .joinCompact input{width:100%!important;min-width:0!important;padding:10px 8px!important;font-size:16px!important;letter-spacing:3px!important;border-radius:10px!important;height:42px!important}
+  .joinCompact .joinAction{width:100%!important;min-width:0!important;height:42px!important;margin:0!important;padding:7px 5px!important;font-size:11px!important;border-radius:10px!important;white-space:nowrap!important}
+  #roomInfo{position:fixed!important;left:50%!important;right:auto!important;bottom:18px!important;transform:translateX(-50%)!important;width:min(86vw,460px)!important;margin:0!important;padding:10px 14px!important;border-radius:16px!important;z-index:4!important}
+  #roomInfo .code{font-size:clamp(25px,5vw,38px)!important;letter-spacing:7px!important}
+  #waitText{font-size:10px!important}
+  #msg{grid-column:1 / span 3!important;position:static!important;transform:none!important;margin:0!important;font-size:10px!important;min-height:12px}
+}
+@media (orientation:landscape) and (max-height:560px){
+  #menu{padding:5px!important}
+  .card{width:96vw!important;height:94dvh!important;padding:9px 12px!important;border-radius:18px!important;gap:6px 9px!important}
+  .card h1{font-size:22px!important;margin:4px 0!important}.card p{font-size:9px!important}
+  .skinPanel{padding:7px!important}.skinTitle{font-size:10px!important;margin-bottom:4px!important}.skins{gap:5px;max-height:145px}.skinBtn{width:39px!important;height:39px!important;flex-basis:39px!important}.skinBtn i{width:16px!important;height:16px!important}
+  #offlineBtn,#createBtn{min-height:40px!important;padding:8px!important;font-size:11px!important}.joinCompact{padding:5px!important;gap:5px!important}.joinCompact input,.joinCompact .joinAction{height:36px!important;padding:6px!important;font-size:11px!important}.joinLabel{font-size:8px!important}
+  #roomInfo{bottom:6px!important;padding:6px 10px!important}.code{font-size:23px!important}
+}
+@media (max-width:900px) and (orientation:landscape){
+  .card{grid-template-columns:minmax(145px,.8fr) minmax(205px,1.15fr) minmax(190px,1fr)!important;gap:7px!important}
+}
 </style>
 </head>
 <body>
@@ -97,8 +135,9 @@ input{width:100%;padding:15px;border-radius:14px;border:1px solid #ffffff25;back
     <button class="btn" id="offlineBtn">بازی آفلاین</button>
     <button class="btn secondary" id="createBtn">ساخت روم آنلاین</button>
     <div id="joinBox" class="joinCompact">
-      <input id="roomInput" maxlength="6" inputmode="numeric" placeholder="کد روم">
-      <button class="btn secondary" id="joinBtn">ورود به روم</button>
+      <div class="joinLabel">کد روم</div>
+      <input id="roomInput" maxlength="6" inputmode="numeric" placeholder="۶ رقمی" aria-label="کد روم">
+      <button class="btn secondary joinAction" id="joinBtn">ورود به روم</button>
     </div>
     <div id="roomInfo" class="hidden">
       <div>کد روم را به دوستت بده:</div>
